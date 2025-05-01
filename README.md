@@ -5,9 +5,9 @@ Train a supervised machine learning model to classify household water usage even
 
 ---
 
-## Analyze Events & Engineer Features
+## 🔍 Analyze Events & Engineer Features
 
-### Existing Features:
+### 🛠️ Existing Features:
 - `eventVolume`
 - `avgFlowRate`
 - `eventLength`
@@ -15,29 +15,29 @@ Train a supervised machine learning model to classify household water usage even
 - `peakFlowRate`
 - `timestamp`
 
-### Feature Engineering Ideas:
-- **Time of Day**: Extract hour, morning/afternoon/evening labels
-- **Day of Week**: May help identify routine behaviors (e.g., laundry on weekends)
-- **Time Since Last Event**: Useful for session grouping and burst detection
-- **Is Weekend**: Boolean feature to separate workday from rest day patterns
-- **Burst Indicator**: Label short bursts (for ice maker, toilet flush)
-- **Rolling Stats**: Moving average of volume or flow rate across last N events
-- **Gap to Next Event**: For future session detection or segmentation
-- **Event Group ID**: To tag related events (optional during pre-processing)
+### 💡 Feature Engineering Ideas:
+- **⏰ Time of Day**: Extract hour, morning/afternoon/evening labels
+- **📅 Day of Week**: May help identify routine behaviors (e.g., laundry on weekends)
+- **⏳ Time Since Last Event**: Useful for session grouping and burst detection
+- **🏖️ Is Weekend**: Boolean feature to separate workday from rest day patterns
+- **💥 Burst Indicator**: Label short bursts (for ice maker, toilet flush)
+- **📈 Rolling Stats**: Moving average of volume or flow rate across last N events
+- **➡️ Gap to Next Event**: For future session detection or segmentation
+- **🔗 Event Group ID**: To tag related events (optional during pre-processing)
 
 ---
 
-## Group Related Events into Sessions (optional)
+## 🔗 Group Related Events into Sessions (optional)
 Used for appliances with multiple bursts (e.g., washing machine, dishwasher).
 
-### Rules:
+### 📜 Rules:
 - Group events within 30 min of each other
 - Total session duration, volume, flow, and event count
 - Label the grouped session when patterns match known appliance usage
 
 ---
 
-## Label the Dataset for Training
+## 🏷️ Label the Dataset for Training
 Start by applying rule-based heuristics to label ~200–300 samples manually.
 
 | Condition | Label |
@@ -51,14 +51,14 @@ Start by applying rule-based heuristics to label ~200–300 samples manually.
 
 ---
 
-## Train the Classifier
+## 🤖 Train the Classifier
 
-### Models to Try:
+### 🧪 Models to Try:
 - Random Forest
 - kNN
 - Support Vector Machine (SVM)
 
-### Pipeline:
+### 🛠️ Pipeline:
 - Train/test split
 - Feature scaling
 - Cross-validation
@@ -66,7 +66,7 @@ Start by applying rule-based heuristics to label ~200–300 samples manually.
 
 ---
 
-## Evaluate and Iterate
+## 📊 Evaluate and Iterate
 
 - Analyze model performance
 - Identify and refine poorly predicted labels
@@ -75,7 +75,7 @@ Start by applying rule-based heuristics to label ~200–300 samples manually.
 
 ---
 
-## Deploy to Mobile (TensorFlow Lite)
+## 📱 Deploy to Mobile (TensorFlow Lite)
 
 - Convert trained model to TFLite
 - Optimize with quantization
@@ -84,7 +84,7 @@ Start by applying rule-based heuristics to label ~200–300 samples manually.
 
 ---
 
-## Python Script Overview
+## 🐍 Python Script Overview
 The `feature_engineering.py` script is an interactive tool for preprocessing and feature engineering of water usage datasets. It allows users to:
 
 - Add time-based features (e.g., hour, day of the week, part of the day).
