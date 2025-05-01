@@ -1,43 +1,43 @@
+# Importing the utility functions from the module
+from feature_engineering_utils import (
+    apply_rules,
+    save_rules,
+    add_time_features,
+    group_sessions,
+    add_burst_indicator,
+    label_dataset,
+    remove_rows_by_value,
+    remove_unlabeled_rows,
+    save_dataframe
+)
+
 import pandas as pd
-import json
 import os
 
-# Function to load and apply rules
-def apply_rules(df, file_name="rules.json"):
-    try:
-        with open(file_name, "r") as f:
-            rules = json.load(f)
-        for rule in rules:
-            condition = rule["condition"]
-            column = rule["column"]
-            value = rule["value"]
-            df.loc[df.eval(condition), column] = value
-        print(f"Rules from {file_name} applied successfully.")
-    except FileNotFoundError:
-        print(f"No rules file found at {file_name}. Skipping rule application.")
+# Ask the user to select a file or specify a path
+file_path = input("Enter the full path of the file you want to open (or press Enter to select from the current directory): ").strip()
+if not file_path:
+    # List all CSV files in the current directory
+    csv_files = [f for f in os.listdir('.') if f.endswith('.csv')]
+    print("Available CSV files:")
+    for i, file in enumerate(csv_files, start=1):
+        print(f"{i}. {file}")
 
-# Function to save rules to a file
-def save_rules(rules, file_name="rules.json"):
-    with open(file_name, "w") as f:
-        json.dump(rules, f, indent=4)
-    print(f"Rules saved to {file_name}")
-
-# List all CSV files in the current directory
-csv_files = [f for f in os.listdir('.') if f.endswith('.csv')]
-print("Available CSV files:")
-for i, file in enumerate(csv_files, start=1):
-    print(f"{i}. {file}")
-
-# Ask the user to select a file
-file_index = int(input("Enter the number of the file you want to open: ").strip()) - 1
-if 0 <= file_index < len(csv_files):
-    file_name = csv_files[file_index]
-    print(f"You selected: {file_name}")
+    # Ask the user to select a file
+    file_index = int(input("Enter the number of the file you want to open: ").strip()) - 1
+    if 0 <= file_index < len(csv_files):
+        file_name = csv_files[file_index]
+        print(f"You selected: {file_name}")
+        file_path = file_name
+    else:
+        print("Invalid selection. Exiting.")
+        exit()
 else:
-    print("Invalid selection. Exiting.")
-    exit()
+    if not os.path.isfile(file_path):
+        print("The specified file does not exist. Exiting.")
+        exit()
 
-FILE_NAME = file_name
+FILE_NAME = file_path
 # Load the data from the CSV file
 csv_file_path = FILE_NAME
 df = pd.read_csv(csv_file_path, parse_dates=["time"])
@@ -54,55 +54,27 @@ else:
 
 # Step-by-step user interaction
 # Ask the user if they want to add Time-based Features
-add_time_features = input("Do you want to add Time-based Features? (yes/no): ").strip().lower()
-if add_time_features == "yes":
-    # Add Time-based Features
-    df["hour"] = df["time"].dt.hour
-    df["day_of_week"] = df["time"].dt.dayofweek
-    df["is_weekend"] = df["day_of_week"].isin([5, 6]).astype(int)
-    df["part_of_day"] = pd.cut(df["hour"],
-                               bins=[0, 6, 12, 18, 24],
-                               labels=["night", "morning", "afternoon", "evening"],
-                               right=False)
-    df["time_since_last_event"] = df["time"].diff().fillna(pd.Timedelta(seconds=0)).dt.total_seconds()
-    print("Time-based Features added.")
+add_time_features_input = input("Do you want to add Time-based Features? (yes/no): ").strip().lower()
+if add_time_features_input == "yes":
+    df = add_time_features(df)
     print(df.head(10))
 
 # Ask the user if they want to add a time threshold for grouping events into sessions
 add_session_grouping = input("Do you want to add a time threshold for grouping events into sessions? (yes/no): ").strip().lower()
 if add_session_grouping == "yes":
-    # Ask the user to specify the session threshold in minutes
     session_threshold_minutes = int(input("Enter the session threshold in minutes: ").strip())
-    SESSION_THRESHOLD = session_threshold_minutes * 60  # Convert minutes to seconds
-
-    # Group events into sessions
-    df["session_id"] = (df["time_since_last_event"] > SESSION_THRESHOLD).cumsum()
-
-    # Calculate session-level statistics
-    session_stats = df.groupby("session_id").agg(
-        session_start=("time", "min"),
-        session_end=("time", "max"),
-        total_volume=("eventVolume", "sum"),
-        total_duration=("eventLength", "sum"),
-        event_count=("time", "count")
-    ).reset_index()
-
-    # Merge session stats back into the original dataframe
-    df = df.merge(session_stats, on="session_id", how="left")
-    print("Session grouping added with a threshold of", session_threshold_minutes, "minutes.")
+    df = group_sessions(df, session_threshold_minutes)
     print(df.head(10))
 
-# Add a Burst Indicator with user-defined categories and Average Flow Rate
-add_burst_indicator = input("Do you want to add a Burst Indicator? (yes/no): ").strip().lower()
-if add_burst_indicator == "yes":
+# Add a Burst Indicator with user-defined categories
+add_burst_indicator_input = input("Do you want to add a Burst Indicator? (yes/no): ").strip().lower()
+if add_burst_indicator_input == "yes":
     while True:
-        # Ask the user to define the conditions for a short burst
         burst_name = input("Enter the name for this short burst category: ").strip()
         max_length = input(f"Enter the maximum event length (in seconds) for {burst_name} (or 'none' to skip): ").strip()
         max_volume = input(f"Enter the maximum event volume (in gallons) for {burst_name} (or 'none' to skip): ").strip()
         max_flow_rate = input(f"Enter the maximum average flow rate (or 'none' to skip): ").strip()
 
-        # Build the condition dynamically
         conditions = []
         if max_length != "none":
             conditions.append(f"eventLength < {max_length}")
@@ -113,16 +85,11 @@ if add_burst_indicator == "yes":
 
         condition = " and ".join(conditions)
 
-        # Apply the condition and label
         if condition:
-            df.loc[df.eval(condition), "burst_indicator"] = burst_name
-            print(f"Short burst category '{burst_name}' added based on condition: {condition}.")
+            df = add_burst_indicator(df, burst_name, condition)
         else:
             print("No valid condition provided. Skipping this burst category.")
 
-        print(df[["time", "eventLength", "eventVolume", "avgFlowRate", "burst_indicator"]].head(10))
-
-        # Ask if the user wants to add another category
         add_another = input("Do you want to add another short burst category? (yes/no): ").strip().lower()
         if add_another != "yes":
             break
@@ -131,25 +98,18 @@ if add_burst_indicator == "yes":
 remove_rows = input("Do you want to remove rows with a specific Burst Indicator value? (yes/no): ").strip().lower()
 if remove_rows == "yes":
     burst_value = input("Enter the Burst Indicator value to remove: ").strip()
-    initial_row_count = len(df)
-    df = df[df["burst_indicator"] != burst_value]
-    removed_rows = initial_row_count - len(df)
-    print(f"Removed {removed_rows} rows where Burst Indicator was '{burst_value}'.")
+    df = remove_rows_by_value(df, "burst_indicator", burst_value)
 
 # Ask the user if they want to apply preset rules from the JSON file
 apply_preset_rules = input("Do you want to apply preset rules from 'rules.json'? (yes/no): ").strip().lower()
 if apply_preset_rules == "yes":
     apply_rules(df, file_name="rules.json")
 
-
-# Interactive Dataset Labeling with Guided Input and Average Flow Rate
+# Interactive Dataset Labeling
 add_labels = input("Do you want to label the dataset? (yes/no): ").strip().lower()
 if add_labels == "yes":
     while True:
-        # Ask the user to define a label
         label_name = input("Enter the name for this label: ").strip()
-
-        # Guide the user to define conditions step-by-step
         print("Define the conditions for this label step-by-step. Use 'none' to skip any value.")
         min_length = input("Enter the minimum event length (or 'none' to skip): ").strip()
         max_length = input("Enter the maximum event length (or 'none' to skip): ").strip()
@@ -158,7 +118,6 @@ if add_labels == "yes":
         min_flow_rate = input("Enter the minimum average flow rate (or 'none' to skip): ").strip()
         max_flow_rate = input("Enter the maximum average flow rate (or 'none' to skip): ").strip()
 
-        # Build the condition string dynamically
         conditions = []
         if min_length != "none":
             conditions.append(f"eventLength >= {min_length}")
@@ -175,16 +134,11 @@ if add_labels == "yes":
 
         condition = " and ".join(conditions)
 
-        # Apply the condition and label
         if condition:
-            df.loc[df.eval(condition), "label"] = label_name
-            print(f"Label '{label_name}' added based on condition: {condition}.")
+            df = label_dataset(df, label_name, condition)
         else:
             print("No valid condition provided. Skipping this label.")
 
-        print(df[["time", "eventLength", "eventVolume", "avgFlowRate", "label"]].head(10))
-
-        # Ask if the user wants to add another label
         add_another_label = input("Do you want to add another label? (yes/no): ").strip().lower()
         if add_another_label != "yes":
             break
@@ -195,74 +149,21 @@ if 'label' in df.columns:
     print("Labeling Summary:")
     print(label_summary)
 
-    # Save the summary to a text file
     summary_file = "labeling_summary.txt"
     with open(summary_file, "w") as f:
         f.write("Labeling Summary:\n")
         f.write(label_summary.to_string())
     print(f"Labeling summary saved to {summary_file}")
-else:
-    print("No 'label' column found. Skipping labeling summary.")
 
 # Ask the user if they want to remove rows without labels
-remove_unlabeled_rows = input("Do you want to remove rows without labels? (yes/no): ").strip().lower()
-if remove_unlabeled_rows == "yes":
-    initial_row_count = len(df)
-    df = df.dropna(subset=["label"])
-    removed_rows = initial_row_count - len(df)
-    print(f"Removed {removed_rows} rows without labels.")
-
-# Collect rules interactively
-rules = []
-add_rules = input("Do you want to define rules interactively? (yes/no): ").strip().lower()
-if add_rules == "yes":
-    while True:
-        column = input("Enter the column to modify (e.g., 'label' or 'burst_indicator'): ").strip()
-        value = input(f"Enter the value to assign to {column}: ").strip()
-        print("Define the condition for this rule step-by-step. Use 'none' to skip any value.")
-        min_length = input("Enter the minimum event length (or 'none' to skip): ").strip()
-        max_length = input("Enter the maximum event length (or 'none' to skip): ").strip()
-        min_volume = input("Enter the minimum event volume (or 'none' to skip): ").strip()
-        max_volume = input("Enter the maximum event volume (or 'none' to skip): ").strip()
-        min_flow_rate = input("Enter the minimum average flow rate (or 'none' to skip): ").strip()
-        max_flow_rate = input("Enter the maximum average flow rate (or 'none' to skip): ").strip()
-
-        # Build the condition string dynamically
-        conditions = []
-        if min_length != "none":
-            conditions.append(f"eventLength >= {min_length}")
-        if max_length != "none":
-            conditions.append(f"eventLength <= {max_length}")
-        if min_volume != "none":
-            conditions.append(f"eventVolume >= {min_volume}")
-        if max_volume != "none":
-            conditions.append(f"eventVolume <= {max_volume}")
-        if min_flow_rate != "none":
-            conditions.append(f"avgFlowRate >= {min_flow_rate}")
-        if max_flow_rate != "none":
-            conditions.append(f"avgFlowRate <= {max_flow_rate}")
-
-        condition = " and ".join(conditions)
-
-        if condition:
-            rules.append({"column": column, "value": value, "condition": condition})
-            print(f"Rule added: If {condition}, set {column} to {value}.")
-        else:
-            print("No valid condition provided. Skipping this rule.")
-
-        add_another_rule = input("Do you want to add another rule? (yes/no): ").strip().lower()
-        if add_another_rule != "yes":
-            break
-
-    save_rules(rules)
+remove_unlabeled_rows_input = input("Do you want to remove rows without labels? (yes/no): ").strip().lower()
+if remove_unlabeled_rows_input == "yes":
+    df = remove_unlabeled_rows(df)
 
 # Ask the user whether to overwrite the file or save with a new name
-# The user is prompted to either overwrite the existing file or provide a new file name.
-# If no input is provided, the default file '85day_labeled.csv' is overwritten.
 output_file = input("Enter the output file name (or press Enter to overwrite '85day_labeled.csv'): ")
 if not output_file:
     output_file = FILE_NAME
 
-# Save the updated dataset to the specified file
-df.to_csv(output_file, index=False)
+save_dataframe(df, output_file)
 print(f"Features saved to {output_file}")

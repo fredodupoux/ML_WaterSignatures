@@ -95,3 +95,33 @@ The `feature_engineering.py` script is an interactive tool for preprocessing and
 - Remove rows without labels or specific burst indicators.
 - Save the processed dataset to a new file.
 
+---
+
+## 🚀 How to Run the Script
+
+To use the `dataPreparation.py` script for preprocessing and feature engineering, follow these steps:
+
+1. **Install Dependencies**:
+   Ensure you have Python 3.8 or later installed. Install the required libraries using pip:
+   ```bash
+   pip install pandas
+   ```
+
+2. **Prepare Your Dataset**:
+   Place your CSV file(s) in the same directory as the script or specify the path when prompted.
+
+3. **Run the Script**:
+   Execute the script in your terminal:
+   ```bash
+   python3 dataPreparation.py
+   ```
+
+4. **Follow the Interactive Prompts**:
+   - Select the dataset file to process.
+   - Choose whether to add time-based features, group events into sessions, or add burst indicators.
+   - Apply preset rules or label the dataset interactively.
+   - Save the processed dataset to a new file or overwrite the existing one.
+
+5. **Output**:
+   The processed dataset will be saved in the specified output file, ready for further analysis or model training.
+
