@@ -1,7 +1,8 @@
 # Water Usage Signature Detection - ML Plan
+This project is designed to add a machine learning feature for an iOS App that is paired with an IoT device that monitors water usage in a household. The IoT device stores high-resolution data in a time series database through InfluxDB integration, featuring real-time data visualization and usage tracking.
 
 ## 🌟 Goal
-Train a supervised machine learning model to classify household water usage events by appliance or fixture (e.g., shower, faucet, toilet, washing machine, dishwasher, fridge, sprinkler).
+Train a supervised machine learning model to classify household water usage events by appliance or fixture (e.g., shower, faucet, toilet, washing machine, dishwasher, fridge, sprinkler). 
 
 ---
 
