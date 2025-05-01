@@ -7,7 +7,7 @@ __pycache__/
 venv/
 .venv/
 # CSV and data files
-*.csv
+# *.csv
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
