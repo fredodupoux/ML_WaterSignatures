@@ -1,0 +1,25 @@
+# Python-related files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+
+# CSV and data files
+*.csv
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# macOS-specific files
+.DS_Store
+
+# Logs
+*.log
+
+# Other
+*.swp
+*.swo
+*.bak
+*.tmp
