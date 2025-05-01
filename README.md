@@ -27,7 +27,7 @@ Train a supervised machine learning model to classify household water usage even
 
 ---
 
-## ⌚️ Step 2: Group Related Events into Sessions
+## ⌚️ Step 2: Group Related Events into Sessions (optional)
 Used for appliances with multiple bursts (e.g., washing machine, dishwasher).
 
 ### Rules:
@@ -37,7 +37,7 @@ Used for appliances with multiple bursts (e.g., washing machine, dishwasher).
 
 ---
 
-## 📄 Step 3: Label the Dataset
+## 📄 Step 3: Label the Dataset for Training
 Start by applying rule-based heuristics to label ~200–300 samples manually.
 
 | Condition | Label |
@@ -55,9 +55,8 @@ Start by applying rule-based heuristics to label ~200–300 samples manually.
 
 ### Models to Try:
 - Random Forest
-- XGBoost
+- kNN
 - Support Vector Machine (SVM)
-- (Optional) LSTM for sequential pattern recognition
 
 ### Pipeline:
 - Train/test split

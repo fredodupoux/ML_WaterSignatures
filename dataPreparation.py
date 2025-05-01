@@ -2,6 +2,26 @@ import pandas as pd
 import json
 import os
 
+# Function to load and apply rules
+def apply_rules(df, file_name="rules.json"):
+    try:
+        with open(file_name, "r") as f:
+            rules = json.load(f)
+        for rule in rules:
+            condition = rule["condition"]
+            column = rule["column"]
+            value = rule["value"]
+            df.loc[df.eval(condition), column] = value
+        print(f"Rules from {file_name} applied successfully.")
+    except FileNotFoundError:
+        print(f"No rules file found at {file_name}. Skipping rule application.")
+
+# Function to save rules to a file
+def save_rules(rules, file_name="rules.json"):
+    with open(file_name, "w") as f:
+        json.dump(rules, f, indent=4)
+    print(f"Rules saved to {file_name}")
+
 # List all CSV files in the current directory
 csv_files = [f for f in os.listdir('.') if f.endswith('.csv')]
 print("Available CSV files:")
@@ -22,13 +42,15 @@ FILE_NAME = file_name
 csv_file_path = FILE_NAME
 df = pd.read_csv(csv_file_path, parse_dates=["time"])
 
-# Sort by time
-df = df.sort_values("time").reset_index(drop=True)
-
-# Ask the user if they want to apply preset rules from the JSON file
-apply_preset_rules = input("Do you want to apply preset rules from 'rules.json'? (yes/no): ").strip().lower()
-if apply_preset_rules == "yes":
-    apply_rules(df)
+# Adjusted to handle both 'time' and '_time' column names
+if 'time' in df.columns:
+    df = df.sort_values("time").reset_index(drop=True)
+elif '_time' in df.columns:
+    df = df.rename(columns={'_time': 'time'})
+    df = df.sort_values("time").reset_index(drop=True)
+else:
+    print("Error: Neither 'time' nor '_time' column found in the dataset.")
+    exit()
 
 # Step-by-step user interaction
 # Ask the user if they want to add Time-based Features
@@ -105,6 +127,21 @@ if add_burst_indicator == "yes":
         if add_another != "yes":
             break
 
+# Ask the user if they want to remove rows based on a specific Burst Indicator value
+remove_rows = input("Do you want to remove rows with a specific Burst Indicator value? (yes/no): ").strip().lower()
+if remove_rows == "yes":
+    burst_value = input("Enter the Burst Indicator value to remove: ").strip()
+    initial_row_count = len(df)
+    df = df[df["burst_indicator"] != burst_value]
+    removed_rows = initial_row_count - len(df)
+    print(f"Removed {removed_rows} rows where Burst Indicator was '{burst_value}'.")
+
+# Ask the user if they want to apply preset rules from the JSON file
+apply_preset_rules = input("Do you want to apply preset rules from 'rules.json'? (yes/no): ").strip().lower()
+if apply_preset_rules == "yes":
+    apply_rules(df, file_name="rules.json")
+
+
 # Interactive Dataset Labeling with Guided Input and Average Flow Rate
 add_labels = input("Do you want to label the dataset? (yes/no): ").strip().lower()
 if add_labels == "yes":
@@ -152,25 +189,28 @@ if add_labels == "yes":
         if add_another_label != "yes":
             break
 
-# Function to save rules to a file
-def save_rules(rules, file_name="rules.json"):
-    with open(file_name, "w") as f:
-        json.dump(rules, f, indent=4)
-    print(f"Rules saved to {file_name}")
+# Check if the 'label' column exists before summarizing
+if 'label' in df.columns:
+    label_summary = df['label'].value_counts()
+    print("Labeling Summary:")
+    print(label_summary)
 
-# Function to load and apply rules
-def apply_rules(df, file_name="rules.json"):
-    try:
-        with open(file_name, "r") as f:
-            rules = json.load(f)
-        for rule in rules:
-            condition = rule["condition"]
-            column = rule["column"]
-            value = rule["value"]
-            df.loc[df.eval(condition), column] = value
-        print(f"Rules from {file_name} applied successfully.")
-    except FileNotFoundError:
-        print(f"No rules file found at {file_name}. Skipping rule application.")
+    # Save the summary to a text file
+    summary_file = "labeling_summary.txt"
+    with open(summary_file, "w") as f:
+        f.write("Labeling Summary:\n")
+        f.write(label_summary.to_string())
+    print(f"Labeling summary saved to {summary_file}")
+else:
+    print("No 'label' column found. Skipping labeling summary.")
+
+# Ask the user if they want to remove rows without labels
+remove_unlabeled_rows = input("Do you want to remove rows without labels? (yes/no): ").strip().lower()
+if remove_unlabeled_rows == "yes":
+    initial_row_count = len(df)
+    df = df.dropna(subset=["label"])
+    removed_rows = initial_row_count - len(df)
+    print(f"Removed {removed_rows} rows without labels.")
 
 # Collect rules interactively
 rules = []
@@ -215,9 +255,6 @@ if add_rules == "yes":
             break
 
     save_rules(rules)
-
-# Apply rules automatically
-apply_rules(df)
 
 # Ask the user whether to overwrite the file or save with a new name
 # The user is prompted to either overwrite the existing file or provide a new file name.

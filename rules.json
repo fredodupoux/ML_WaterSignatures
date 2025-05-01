@@ -1,1 +1,12 @@
-[]
+[
+    {
+        "column": "label",
+        "value": "WC",
+        "condition": "eventLength >= 20 and eventLength <= 50 and eventVolume >= 1.2 and eventVolume <= 1.9 and avgFlowRate <= 3"
+    },
+    {
+        "column": "label",
+        "value": "shower",
+        "condition": "eventLength >= 120 and eventLength <= 600 and eventVolume >= 4 and avgFlowRate >= 1.8 and avgFlowRate <= 3"
+    }
+]
