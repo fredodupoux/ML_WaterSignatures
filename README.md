@@ -5,7 +5,7 @@ Train a supervised machine learning model to classify household water usage even
 
 ---
 
-## 🔎 Step 1: Analyze Events & Engineer Features
+## Analyze Events & Engineer Features
 
 ### Existing Features:
 - `eventVolume`
@@ -27,7 +27,7 @@ Train a supervised machine learning model to classify household water usage even
 
 ---
 
-## ⌚️ Step 2: Group Related Events into Sessions (optional)
+## Group Related Events into Sessions (optional)
 Used for appliances with multiple bursts (e.g., washing machine, dishwasher).
 
 ### Rules:
@@ -37,7 +37,7 @@ Used for appliances with multiple bursts (e.g., washing machine, dishwasher).
 
 ---
 
-## 📄 Step 3: Label the Dataset for Training
+## Label the Dataset for Training
 Start by applying rule-based heuristics to label ~200–300 samples manually.
 
 | Condition | Label |
@@ -51,7 +51,7 @@ Start by applying rule-based heuristics to label ~200–300 samples manually.
 
 ---
 
-## 🧪 Step 4: Train the Classifier
+## Train the Classifier
 
 ### Models to Try:
 - Random Forest
@@ -66,7 +66,7 @@ Start by applying rule-based heuristics to label ~200–300 samples manually.
 
 ---
 
-## ⚖️ Step 5: Evaluate and Iterate
+## Evaluate and Iterate
 
 - Analyze model performance
 - Identify and refine poorly predicted labels
@@ -75,7 +75,7 @@ Start by applying rule-based heuristics to label ~200–300 samples manually.
 
 ---
 
-## 🚀 Step 6: Deploy to Mobile (TensorFlow Lite)
+## Deploy to Mobile (TensorFlow Lite)
 
 - Convert trained model to TFLite
 - Optimize with quantization
@@ -84,11 +84,14 @@ Start by applying rule-based heuristics to label ~200–300 samples manually.
 
 ---
 
-## ✅ Next Steps:
-1. Implement feature engineering
-2. Develop grouping logic for appliance sessions
-3. Apply rule-based labeling on dataset
-4. Prototype a basic ML model with labeled events
+## Python Script Overview
+The `feature_engineering.py` script is an interactive tool for preprocessing and feature engineering of water usage datasets. It allows users to:
 
----
+- Add time-based features (e.g., hour, day of the week, part of the day).
+- Group events into sessions based on a time threshold.
+- Add burst indicators for specific event patterns.
+- Apply preset rules from a JSON file.
+- Label the dataset interactively based on user-defined conditions.
+- Remove rows without labels or specific burst indicators.
+- Save the processed dataset to a new file.
 
